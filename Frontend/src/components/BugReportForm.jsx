@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const BugReportForm = () => {
   const [formData, setFormData] = useState({
-    title: "",
+    Summary: "",
     description: "",
-    priority: "Medium",
+    priority: "P3",
   });
+
+  const [aiResult, setAiResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const resultRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,34 +18,37 @@ const BugReportForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.description || !formData.priority) {
+    if (!formData.Summary || !formData.description || !formData.priority) {
       alert("Please fill all fields before submitting.");
       return;
     }
 
-    console.log("Submitting:", formData);
-
     try {
+      setLoading(true);
       const response = await fetch("http://localhost:5000/api/bugs", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
-      console.log("Response:", data);
+      console.log("Server Response:", data);
 
       if (response.ok) {
-        alert("Bug reported successfully!");
-        setFormData({ title: "", description: "", priority: "Medium" });
+        setAiResult(data.aiAnalysis);
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+        alert("Bug reported successfully.");
+        setFormData({ Summary: "", description: "", priority: "P3" });
       } else {
-        alert(`Failed to report bug: ${data.message}`);
+        alert(`Error: ${data.message}`);
       }
     } catch (error) {
       console.error("Error submitting bug:", error);
-      alert("Error submitting bug. Please try again.");
+      alert("Server error while submitting bug.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,9 +60,9 @@ const BugReportForm = () => {
           <label className="block text-gray-700 font-medium">Bug Title</label>
           <input
             type="text"
-            name="title"
+            name="Summary"
             placeholder="Enter bug title"
-            value={formData.title}
+            value={formData.Summary}
             onChange={handleChange}
             required
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -82,19 +89,48 @@ const BugReportForm = () => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+            <option value="P4">P4</option>
+            <option value="P5">P5</option>
           </select>
         </div>
 
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+          disabled={loading}
         >
-          Submit Bug Report
+          {loading ? "Submitting..." : "Submit Bug Report"}
         </button>
       </form>
+
+      {aiResult && (
+        <div
+          ref={resultRef}
+          className="mt-6 p-4 bg-gray-100 rounded border border-gray-300"
+        >
+          <h3 className="font-semibold mb-2 text-lg">AI Analysis</h3>
+
+          {aiResult.duplicates && Array.isArray(aiResult.duplicates) && aiResult.duplicates.length > 0 ? (
+            <>
+              <p className="text-red-600 font-medium">Similar bug reports found:</p>
+              {aiResult.duplicates.map((dup, idx) => (
+                <p key={idx} className="text-sm text-gray-800">
+                  - Title: <strong>{dup["Existing Report"]}</strong> (Similarity: {dup.Similarity})
+                </p>
+              ))}
+            </>
+          ) : (
+            <p className="text-green-700">No similar bug reports found.</p>
+          )}
+
+          <p><strong>Bug Type:</strong> {aiResult.bug_type}</p>
+          <p><strong>Severity:</strong> {aiResult.severity}</p>
+          <p><strong>Is Functional:</strong> {aiResult.is_functional ? "Yes" : "No"}</p>
+        </div>
+      )}
     </div>
   );
 };

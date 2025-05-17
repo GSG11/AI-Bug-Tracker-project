@@ -78,7 +78,6 @@ const BugList = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 h-screen overflow-hidden">
-      
       {bugs.length === 0 ? (
         <p className="text-gray-500">No bugs reported yet.</p>
       ) : (
@@ -103,9 +102,11 @@ const BugList = () => {
                     onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
                     className="w-full p-2 border rounded-md mb-2"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="P3">P3</option>
+                    <option value="P4">P4</option>
+                    <option value="P5">P5</option>
                   </select>
                   <div className="mt-3 space-x-2">
                     <button onClick={() => handleSave(bug._id)} className="bg-green-500 text-white px-3 py-1 rounded">
@@ -122,7 +123,15 @@ const BugList = () => {
                   <p className="text-sm text-gray-600">{bug.description}</p>
                   <p className="mt-2">
                     <strong>Priority:</strong>{" "}
-                    <span className={`ml-1 ${bug.priority === "High" ? "text-red-500" : "text-blue-500"}`}>
+                    <span
+                      className={`ml-1 ${
+                        bug.priority === "P1" ? "text-red-500 font-bold" :
+                        bug.priority === "P2" ? "text-orange-500 font-bold" :
+                        bug.priority === "P3" ? "text-yellow-500 font-bold" :
+                        bug.priority === "P4" ? "text-green-500 font-bold" :
+                        bug.priority === "P5" ? "text-blue-500 font-bold" : ""
+                      }`}
+                    >
                       {bug.priority}
                     </span>
                   </p>
